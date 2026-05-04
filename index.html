@@ -142,7 +142,7 @@ window.onclick = function(e) {
   }
 }
 
-/* ENVIAR (VERSIÓN ESTABLE) */
+/* ENVIAR */
 function enviar() {
 
   const nombre = document.getElementById("nombre").value;
@@ -161,10 +161,18 @@ function enviar() {
     method: "POST",
     body: params
   })
-  .then(() => {
+  .then(r => r.text())
+  .then(res => {
+
+    if (res !== "OK") {
+      alert("Error al enviar");
+      return;
+    }
+
     document.getElementById("nombre").value = "";
     document.getElementById("mensaje").value = "";
     document.getElementById("modal").style.display = "none";
+
     cargarMensajes();
   })
   .catch(err => {
@@ -173,40 +181,32 @@ function enviar() {
   });
 }
 
-/* CARGAR MENSAJES */
-const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-LsIMtTnuZJFF-cGy6loSQiolJl4bQC6fC8E0Y4mn41EhDwLToRpQSn4Y_2Hl6WrVCXSciaFz9Bg0/pub?output=csv";
-
+/* CARGAR MENSAJES (YA SIN CSV → JSON DEL APPS SCRIPT) */
 function cargarMensajes() {
 
-  fetch(url + "&t=" + Date.now())
-    .then(r => r.text())
+  fetch(scriptURL)
+    .then(r => r.json())
     .then(data => {
 
       const cont = document.getElementById("mensajes");
       cont.innerHTML = "";
 
-      const filas = data.split("\n").slice(1);
-
-      filas.forEach(f => {
-
-        const c = f.split(",");
-
-        const nombre = (c[1] || "").replace(/"/g, "").trim();
-        const mensaje = (c[2] || "").replace(/"/g, "").trim();
-
-        if (!nombre || !mensaje) return;
+      data.forEach(m => {
 
         const card = document.createElement("div");
         card.className = "card";
 
         card.innerHTML = `
-          <div class="nombre">${nombre}</div>
-          <div>${mensaje}</div>
+          <div class="nombre">${m.nombre}</div>
+          <div>${m.mensaje}</div>
         `;
 
         cont.appendChild(card);
       });
 
+    })
+    .catch(err => {
+      console.error("Error cargando mensajes:", err);
     });
 }
 
