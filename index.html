@@ -26,32 +26,35 @@ h1 { margin: 15px 0; }
   color: #444;
 }
 
-/* BOTÓN DISCRETO */
-.fab {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #333;
-  color: white;
-  padding: 12px 16px;
-  border-radius: 50px;
-  cursor: pointer;
-}
-
-/* FORMULARIO OCULTO */
+/* FORMULARIO */
 .form {
-  display: none;
   background: white;
   padding: 20px;
   margin: 20px;
   border-radius: 15px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 input, textarea {
-  width: 90%;
+  width: 100%;
+  box-sizing: border-box;
   padding: 10px;
-  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* BOTÓN */
+button {
+  padding: 10px;
+  border: none;
+  background: #333;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 /* MENSAJES */
@@ -70,7 +73,10 @@ input, textarea {
   text-align: left;
 }
 
-.nombre { font-weight: bold; }
+.nombre {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
 </style>
 
 </head>
@@ -88,32 +94,22 @@ input, textarea {
 </div>
 
 <!-- FORMULARIO -->
-<div class="form" id="form">
+<div class="form">
   <h3>💬 Escribe tu mensaje</h3>
+
   <input id="nombre" placeholder="Tu nombre">
   <textarea id="mensaje" placeholder="Tu mensaje"></textarea>
+
   <button onclick="enviar()">Enviar</button>
 </div>
 
 <!-- MENSAJES -->
 <div class="contenedor" id="mensajes"></div>
 
-<!-- BOTÓN -->
-<div class="fab" onclick="toggleForm()">✍️ Escribir</div>
-
 <script>
 
 const scriptURL = "https://script.google.com/macros/s/AKfycbz1GV74T5ZJu9yKB9_TJb0LmLPRA8e2pUzlJ2yyWkn6xnb5wp-sz12serMyuINPJ3Dn/exec";
 
-const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-LsIMtTnuZJFF-cGy6loSQiolJl4bQC6fC8E0Y4mn41EhDwLToRpQSn4Y_2Hl6WrVCXSciaFz9Bg0/pub?output=csv";
-
-/* FORMULARIO ON/OFF */
-function toggleForm() {
-  const f = document.getElementById("form");
-  f.style.display = (f.style.display === "block") ? "none" : "block";
-}
-
-/* ENVIAR */
 function enviar() {
 
   const nombre = document.getElementById("nombre").value;
@@ -124,55 +120,62 @@ function enviar() {
     return;
   }
 
-  const formData = new FormData();
-  formData.append("nombre", nombre);
-  formData.append("mensaje", mensaje);
-
   fetch(scriptURL, {
     method: "POST",
-    body: formData
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: "nombre=" + encodeURIComponent(nombre) +
+          "&mensaje=" + encodeURIComponent(mensaje)
   })
-  .then(() => {
+  .then(r => r.text())
+  .then(res => {
     document.getElementById("nombre").value = "";
     document.getElementById("mensaje").value = "";
-    document.getElementById("form").style.display = "none";
     cargarMensajes();
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Error enviando mensaje");
   });
 }
 
-/* MENSAJES */
+/* ⚠️ IMPORTANTE:
+   SIN CSV ahora no podemos leer automáticamente desde Apps Script
+   así que usamos Google Sheets publicado (lo que ya tenías) */
+
+const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-LsIMtTnuZJFF-cGy6loSQiolJl4bQC6fC8E0Y4mn41EhDwLToRpQSn4Y_2Hl6WrVCXSciaFz9Bg0/pub?output=csv";
+
 function cargarMensajes() {
 
-  fetch(url)
+  fetch(url + "&t=" + new Date().getTime())
     .then(res => res.text())
     .then(data => {
 
-      const filas = data.split("\n").slice(1);
       const contenedor = document.getElementById("mensajes");
-
       contenedor.innerHTML = "";
 
-      filas
-        .filter(f => f.trim() !== "")
-        .forEach(fila => {
+      const filas = data.split("\n").slice(1);
 
-          const c = fila.split(",");
+      filas.forEach(fila => {
 
-          const nombre = c[1]?.replace(/"/g, "").trim();
-          const mensaje = c[2]?.replace(/"/g, "").trim();
+        const c = fila.split(",");
 
-          if (!nombre || !mensaje) return;
+        const nombre = (c[1] || "").replace(/"/g, "").trim();
+        const mensaje = (c[2] || "").replace(/"/g, "").trim();
 
-          const card = document.createElement("div");
-          card.className = "card";
+        if (!nombre || !mensaje) return;
 
-          card.innerHTML = `
-            <div class="nombre">${nombre}</div>
-            <div>${mensaje}</div>
-          `;
+        const card = document.createElement("div");
+        card.className = "card";
 
-          contenedor.appendChild(card);
-        });
+        card.innerHTML = `
+          <div class="nombre">${nombre}</div>
+          <div>${mensaje}</div>
+        `;
+
+        contenedor.appendChild(card);
+      });
 
     });
 }
