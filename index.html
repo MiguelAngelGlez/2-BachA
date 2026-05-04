@@ -19,17 +19,38 @@ body {
   display: block;
 }
 
-/* TITULO */
+/* TÍTULO */
 h1 {
-  margin: 20px 0 10px;
-  font-size: 28px;
+  margin: 15px 0;
 }
 
-/* MENSAJE PROFE */
+/* MENSAJE PROFESOR */
 .mensaje-profe {
   font-style: italic;
-  margin: 10px 20px 20px;
+  margin-bottom: 10px;
   color: #444;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  border: none;
+  background: #333;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* SECCIONES */
+.section {
+  display: none;
 }
 
 /* FORMULARIO */
@@ -49,11 +70,11 @@ input, textarea {
   border: 1px solid #ccc;
 }
 
-button {
-  padding: 10px 20px;
-  border: none;
+button.send {
   background: #333;
   color: white;
+  border: none;
+  padding: 10px 20px;
   border-radius: 10px;
   cursor: pointer;
 }
@@ -72,17 +93,11 @@ button {
   border-radius: 15px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   text-align: left;
-  transition: transform 0.2s;
-}
-
-.card:hover {
-  transform: translateY(-3px);
 }
 
 .nombre {
   font-weight: bold;
-  margin-bottom: 8px;
-  color: #333;
+  margin-bottom: 5px;
 }
 </style>
 
@@ -92,34 +107,57 @@ button {
 
 <!-- FOTO -->
 <div class="header">
-  <img src="FOTO.jpg" alt="Clase">
+  <img src="FOTO.jpg">
 </div>
 
-<h1>🎓 Fin de curso 2º Bachillerato A</h1>
+<h1>🎓 Fin de curso 2º BachA</h1>
 
 <div class="mensaje-profe">
-  "Ha sido un placer acompañaros este curso. Os deseo lo mejor ❤️"
+  "Ha sido un placer acompañaros ❤️"
 </div>
 
-<!-- FORMULARIO -->
-<div class="form">
-  <h3>💬 Deja tu mensaje</h3>
-
-  <input type="text" id="nombre" placeholder="Tu nombre">
-  <textarea id="mensaje" placeholder="Tu mensaje"></textarea>
-
-  <button onclick="enviar()">Enviar</button>
+<!-- TABS -->
+<div class="tabs">
+  <button onclick="showTab('mensajes')">💬 Mensajes</button>
+  <button onclick="showTab('escribir')">✍️ Escribe</button>
 </div>
 
 <!-- MENSAJES -->
-<div class="contenedor" id="mensajes"></div>
+<div id="mensajesTab" class="section" style="display:block;">
+  <div class="contenedor" id="mensajes"></div>
+</div>
+
+<!-- ESCRIBIR -->
+<div id="escribirTab" class="section">
+
+  <div class="form">
+    <h3>💬 Deja tu mensaje</h3>
+
+    <input type="text" id="nombre" placeholder="Tu nombre">
+    <textarea id="mensaje" placeholder="Tu mensaje"></textarea>
+
+    <button class="send" onclick="enviar()">Enviar</button>
+  </div>
+
+</div>
 
 <script>
 
-// 🔥 TU SCRIPT DE GOOGLE APPS SCRIPT
+// 🔥 TU APPS SCRIPT
 const scriptURL = "https://script.google.com/macros/s/AKfycbz1GV74T5ZJu9yKB9_TJb0LmLPRA8e2pUzlJ2yyWkn6xnb5wp-sz12serMyuINPJ3Dn/exec";
 
-// ENVIAR MENSAJE
+// 📊 GOOGLE SHEETS CSV
+const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-LsIMtTnuZJFF-cGy6loSQiolJl4bQC6fC8E0Y4mn41EhDwLToRpQSn4Y_2Hl6WrVCXSciaFz9Bg0/pub?output=csv";
+
+// 🔁 CAMBIAR PESTAÑAS
+function showTab(tab) {
+  document.getElementById("mensajesTab").style.display = "none";
+  document.getElementById("escribirTab").style.display = "none";
+
+  document.getElementById(tab + "Tab").style.display = "block";
+}
+
+// ✍️ ENVIAR MENSAJE
 function enviar() {
 
   const nombre = document.getElementById("nombre").value;
@@ -130,22 +168,24 @@ function enviar() {
     return;
   }
 
+  const formData = new FormData();
+  formData.append("nombre", nombre);
+  formData.append("mensaje", mensaje);
+
   fetch(scriptURL, {
     method: "POST",
-    body: JSON.stringify({ nombre, mensaje })
+    body: formData
   })
   .then(() => {
     alert("Mensaje enviado ❤️");
     document.getElementById("nombre").value = "";
     document.getElementById("mensaje").value = "";
     cargarMensajes();
-  })
-  .catch(err => console.error(err));
+    showTab('mensajes');
+  });
 }
 
-// CARGAR MENSAJES
-const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-LsIMtTnuZJFF-cGy6loSQiolJl4bQC6fC8E0Y4mn41EhDwLToRpQSn4Y_2Hl6WrVCXSciaFz9Bg0/pub?output=csv";
-
+// 💬 CARGAR MENSAJES
 function cargarMensajes() {
 
   fetch(url)
@@ -184,7 +224,10 @@ function cargarMensajes() {
 
 }
 
-// cargar al entrar
+// 🔄 AUTO REFRESH CADA 5s
+setInterval(cargarMensajes, 5000);
+
+// carga inicial
 cargarMensajes();
 
 </script>
