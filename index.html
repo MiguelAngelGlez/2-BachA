@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Fin de curso</title>
+<title>Fin de curso 2º BachA</title>
 
 <style>
 body {
@@ -12,7 +12,7 @@ body {
   text-align: center;
 }
 
-/* FOTO */
+/* FOTO RESPONSIVE */
 .header img {
   width: 100%;
   height: auto;
@@ -25,14 +25,14 @@ h1 {
   font-size: 28px;
 }
 
-/* MENSAJE PROFE */
+/* MENSAJE PROFESOR */
 .mensaje-profe {
   font-style: italic;
   margin: 10px 20px 30px;
   color: #444;
 }
 
-/* CONTENEDOR */
+/* GRID MENSAJES */
 .contenedor {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -65,6 +65,7 @@ h1 {
 
 <body>
 
+<!-- FOTO -->
 <div class="header">
   <img src="FOTO.jpg" alt="Clase">
 </div>
@@ -75,18 +76,19 @@ h1 {
   "Ha sido un placer acompañaros este curso. Os deseo lo mejor ❤️"
 </div>
 
+<!-- AQUI SALEN LOS MENSAJES -->
 <div class="contenedor" id="mensajes"></div>
 
 <script>
 
-// 📌 TU GOOGLE SHEETS (CSV)
+// 📌 GOOGLE SHEETS CSV (TU ENLACE)
 const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-LsIMtTnuZJFF-cGy6loSQiolJl4bQC6fC8E0Y4mn41EhDwLToRpQSn4Y_2Hl6WrVCXSciaFz9Bg0/pub?output=csv";
 
 fetch(url)
   .then(res => res.text())
   .then(data => {
 
-    const filas = data.split("\n").slice(1); // quitar cabecera
+    const filas = data.split("\n").slice(1);
     const contenedor = document.getElementById("mensajes");
 
     // mezclar orden
@@ -94,14 +96,14 @@ fetch(url)
 
     filas.forEach(fila => {
 
-      // separar columnas (nombre, mensaje)
+      if (!fila.trim()) return;
+
       const columnas = fila.split(",");
 
       const nombre = columnas[1]?.replace(/"/g, "").trim();
       const mensaje = columnas[2]?.replace(/"/g, "").trim();
 
       if (!nombre || !mensaje) return;
-      if (nombre.toLowerCase().includes("nombre")) return;
 
       const card = document.createElement("div");
       card.className = "card";
@@ -114,6 +116,9 @@ fetch(url)
       contenedor.appendChild(card);
     });
 
+  })
+  .catch(err => {
+    console.error("Error cargando mensajes:", err);
   });
 
 </script>
